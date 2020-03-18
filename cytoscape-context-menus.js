@@ -1,11 +1,13 @@
-;(function(){ 'use strict';
+(function() {
+  "use strict";
 
   var $ = typeof jQuery === typeof undefined ? null : jQuery;
 
-  var register = function( cytoscape, $ ){
-    
-    if( !cytoscape ){ return; } // can't register if cytoscape unspecified
-    
+  var register = function(cytoscape, $) {
+    if (!cytoscape) {
+      return;
+    } // can't register if cytoscape unspecified
+
     var defaults = {
       // Use taphold to bring up the context menu
       taphold: false,
@@ -42,23 +44,23 @@
         // add class names to this list
       ]
     };
-    
+
     var eventCyTapStart; // The event to be binded on tap start
-    
+
     // To initialize with options.
-    cytoscape('core', 'contextMenus', function (opts) {
+    cytoscape("core", "contextMenus", function(opts) {
       var cy = this;
-      
+
       // Initilize scratch pad
-      if (!cy.scratch('cycontextmenus')) {
-        cy.scratch('cycontextmenus', {});
+      if (!cy.scratch("cycontextmenus")) {
+        cy.scratch("cycontextmenus", {});
       }
-      
-      var options = getScratchProp('options');
-      var $cxtMenu = getScratchProp('cxtMenu');
-      var menuItemCSSClass = 'cy-context-menus-cxt-menuitem';
-      var dividerCSSClass = 'cy-context-menus-divider';
-      
+
+      var options = getScratchProp("options");
+      var $cxtMenu = getScratchProp("cxtMenu");
+      var menuItemCSSClass = "cy-context-menus-cxt-menuitem";
+      var dividerCSSClass = "cy-context-menus-divider";
+
       // Merge default options with the ones coming from parameter
       function extend(defaults, options) {
         var obj = {};
@@ -72,19 +74,19 @@
         }
 
         return obj;
-      };
+      }
 
       function getScratchProp(propname) {
-        return cy.scratch('cycontextmenus')[propname];
-      };
-      
+        return cy.scratch("cycontextmenus")[propname];
+      }
+
       function setScratchProp(propname, value) {
-        cy.scratch('cycontextmenus')[propname] = value;
-      };
+        cy.scratch("cycontextmenus")[propname] = value;
+      }
 
       function preventDefaultContextTap() {
-        $(".cy-context-menus-cxt-menu").contextmenu( function() {
-            return false;
+        $(".cy-context-menus-cxt-menu").contextmenu(function() {
+          return false;
         });
       }
 
@@ -92,10 +94,10 @@
       function getMenuItemClassStr(classes, hasTrailingDivider) {
         var str = getClassStr(classes);
 
-        str += ' ' + menuItemCSSClass;
+        str += " " + menuItemCSSClass;
 
-        if(hasTrailingDivider) {
-          str += ' ' + dividerCSSClass;
+        if (hasTrailingDivider) {
+          str += " " + dividerCSSClass;
         }
 
         return str;
@@ -103,13 +105,13 @@
 
       // Get string representation of css classes
       function getClassStr(classes) {
-        var str = '';
+        var str = "";
 
-        for( var i = 0; i < classes.length; i++ ) {
+        for (var i = 0; i < classes.length; i++) {
           var className = classes[i];
           str += className;
-          if(i !== classes.length - 1) {
-            str += ' ';
+          if (i !== classes.length - 1) {
+            str += " ";
           }
         }
 
@@ -117,79 +119,91 @@
       }
 
       function displayComponent($component) {
-        $component.css('display', 'block');
+        $component.css("display", "block");
       }
 
       function hideComponent($component) {
-        $component.css('display', 'none');
+        $component.css("display", "none");
       }
 
       function hideMenuItemComponents() {
-        $cxtMenu.children().css('display', 'none');
+        $cxtMenu.children().css("display", "none");
       }
 
       function bindOnClickFunction($component, onClickFcn) {
         var callOnClickFcn;
 
-        $component.on('click', callOnClickFcn = function() {
-          onClickFcn(getScratchProp('currentCyEvent'));
-        });
+        $component.on(
+          "click",
+          (callOnClickFcn = function(e) {
+            onClickFcn(getScratchProp("currentCyEvent"), e);
+          })
+        );
 
-        $component.data('call-on-click-function', callOnClickFcn); 
+        $component.data("call-on-click-function", callOnClickFcn);
       }
 
       function bindCyCxttap($component, selector, coreAsWell) {
         function _cxtfcn(event) {
-          setScratchProp('currentCyEvent', event);
+          setScratchProp("currentCyEvent", event);
           adjustCxtMenu(event); // adjust the position of context menu
-          if ($component.data('show')) {
+          if ($component.data("show")) {
             // Now we have a visible element display context menu if it is not visible
-            if (!$cxtMenu.is(':visible')) {
+            if (!$cxtMenu.is(":visible")) {
               displayComponent($cxtMenu);
             }
             // anyVisibleChild indicates if there is any visible child of context menu if not do not show the context menu
-            setScratchProp('anyVisibleChild', true);// there is visible child
+            setScratchProp("anyVisibleChild", true); // there is visible child
             displayComponent($component); // display the component
           }
 
           // If there is no visible element hide the context menu as well(If it is visible)
-          if (!getScratchProp('anyVisibleChild') && $cxtMenu.is(':visible')) {
+          if (!getScratchProp("anyVisibleChild") && $cxtMenu.is(":visible")) {
             hideComponent($cxtMenu);
           }
         }
 
         var cxtfcn;
         var cxtCoreFcn;
-        var evtType=options.taphold?'taphold':'cxttap'
-        if(coreAsWell) {
-          
-          cy.on(evtType, cxtCoreFcn = function(event) {
-            var target = event.target || event.cyTarget;
-            if( target != cy ) {
-              return;
-            }
+        var evtType = options.taphold ? "taphold" : "cxttap";
+        if (coreAsWell) {
+          cy.on(
+            evtType,
+            (cxtCoreFcn = function(event) {
+              var target = event.target || event.cyTarget;
+              if (target != cy) {
+                return;
+              }
 
-            _cxtfcn(event);
-          });
+              _cxtfcn(event);
+            })
+          );
         }
 
-        if(selector) {
-          cy.on(evtType, selector, cxtfcn = function(event) {
-            _cxtfcn(event);
-          });
+        if (selector) {
+          cy.on(
+            evtType,
+            selector,
+            (cxtfcn = function(event) {
+              _cxtfcn(event);
+            })
+          );
         }
 
         // Bind the event to menu item to be able to remove it back
-        $component.data('cy-context-menus-cxtfcn', cxtfcn);
-        $component.data('cy-context-menus-cxtcorefcn', cxtCoreFcn);
+        $component.data("cy-context-menus-cxtfcn", cxtfcn);
+        $component.data("cy-context-menus-cxtcorefcn", cxtCoreFcn);
       }
 
       function bindCyEvents() {
-        cy.on('tapstart', eventCyTapStart = function(){
-          hideComponent($cxtMenu);
-          setScratchProp('cxtMenuPosition', undefined);
-          setScratchProp('currentCyEvent', undefined);
-        });
+        cy.on(
+          "tapstart",
+          (eventCyTapStart = function() {
+            hideComponent($cxtMenu);
+            setScratchProp("cxtMenuPosition", undefined);
+            setScratchProp("currentCyEvent", undefined);
+          })
+        );
       }
 
       function performBindings($component, onClickFcn, selector, coreAsWell) {
@@ -199,63 +213,86 @@
 
       // Adjusts context menu if necessary
       function adjustCxtMenu(event) {
-        var currentCxtMenuPosition = getScratchProp('cxtMenuPosition');
+        var currentCxtMenuPosition = getScratchProp("cxtMenuPosition");
         var cyPos = event.position || event.cyPosition;
 
-        if( currentCxtMenuPosition != cyPos ) {
+        if (currentCxtMenuPosition != cyPos) {
           hideMenuItemComponents();
-          setScratchProp('anyVisibleChild', false);// we hide all children there is no visible child remaining
-          setScratchProp('cxtMenuPosition', cyPos);
+          setScratchProp("anyVisibleChild", false); // we hide all children there is no visible child remaining
+          setScratchProp("cxtMenuPosition", cyPos);
 
           var containerPos = $(cy.container()).offset();
           var renderedPos = event.renderedPosition || event.cyRenderedPosition;
 
-          var borderThickness = parseInt($(cy.container()).css("border-width").replace("px",""));
-          if(borderThickness > 0){
+          var borderThickness = parseInt(
+            $(cy.container())
+              .css("border-width")
+              .replace("px", "")
+          );
+          if (borderThickness > 0) {
             containerPos.top += borderThickness;
             containerPos.left += borderThickness;
           }
-          
+
           // var left = containerPos.left + renderedPos.x;
           // var top = containerPos.top + renderedPos.y;
           //$cxtMenu.css('left', left);
           //$cxtMenu.css('top', top);
 
-
           var containerHeight = $(cy.container()).innerHeight();
-          var containerWidth =  $(cy.container()).innerWidth();       
+          var containerWidth = $(cy.container()).innerWidth();
 
-          var horizontalSplit = containerHeight/2 ;
-          var verticalSplit = containerWidth/2 ;
+          var horizontalSplit = containerHeight / 2;
+          var verticalSplit = containerWidth / 2;
           var windowHeight = $(window).height();
-          var windowWidth = $(window).width();          
-          
-                    
-              //When user click on bottom-left part of window
-              if(renderedPos.y > horizontalSplit && renderedPos.x <= verticalSplit) {
-                $cxtMenu.css("left", renderedPos.x + containerPos.left);
-                $cxtMenu.css("bottom", windowHeight - (containerPos.top + renderedPos.y));
-                $cxtMenu.css("right", "auto");
-                $cxtMenu.css("top", "auto");
-              } else if(renderedPos.y > horizontalSplit && renderedPos.x > verticalSplit) {
-                //When user click on bottom-right part of window
-               $cxtMenu.css("right", windowWidth - (containerPos.left+ renderedPos.x));
-               $cxtMenu.css("bottom", windowHeight - (containerPos.top + renderedPos.y));
-               $cxtMenu.css("left", "auto");
-               $cxtMenu.css("top", "auto");
-              } else if(renderedPos.y <= horizontalSplit && renderedPos.x <= verticalSplit) {
-                //When user click on top-left part of window
-               $cxtMenu.css("left", renderedPos.x + containerPos.left);
-               $cxtMenu.css("top", renderedPos.y + containerPos.top);
-               $cxtMenu.css("right", "auto");
-               $cxtMenu.css("bottom", "auto");
-              } else {
-                 //When user click on top-right part of window
-               $cxtMenu.css("right", windowWidth - (renderedPos.x + containerPos.left));
-               $cxtMenu.css("top", renderedPos.y + containerPos.top);
-               $cxtMenu.css("left", "auto");
-               $cxtMenu.css("bottom", "auto");
-              }
+          var windowWidth = $(window).width();
+
+          //When user click on bottom-left part of window
+          if (
+            renderedPos.y > horizontalSplit &&
+            renderedPos.x <= verticalSplit
+          ) {
+            $cxtMenu.css("left", renderedPos.x + containerPos.left);
+            $cxtMenu.css(
+              "bottom",
+              windowHeight - (containerPos.top + renderedPos.y)
+            );
+            $cxtMenu.css("right", "auto");
+            $cxtMenu.css("top", "auto");
+          } else if (
+            renderedPos.y > horizontalSplit &&
+            renderedPos.x > verticalSplit
+          ) {
+            //When user click on bottom-right part of window
+            $cxtMenu.css(
+              "right",
+              windowWidth - (containerPos.left + renderedPos.x)
+            );
+            $cxtMenu.css(
+              "bottom",
+              windowHeight - (containerPos.top + renderedPos.y)
+            );
+            $cxtMenu.css("left", "auto");
+            $cxtMenu.css("top", "auto");
+          } else if (
+            renderedPos.y <= horizontalSplit &&
+            renderedPos.x <= verticalSplit
+          ) {
+            //When user click on top-left part of window
+            $cxtMenu.css("left", renderedPos.x + containerPos.left);
+            $cxtMenu.css("top", renderedPos.y + containerPos.top);
+            $cxtMenu.css("right", "auto");
+            $cxtMenu.css("bottom", "auto");
+          } else {
+            //When user click on top-right part of window
+            $cxtMenu.css(
+              "right",
+              windowWidth - (renderedPos.x + containerPos.left)
+            );
+            $cxtMenu.css("top", renderedPos.y + containerPos.top);
+            $cxtMenu.css("left", "auto");
+            $cxtMenu.css("bottom", "auto");
+          }
         }
       }
 
@@ -270,55 +307,88 @@
         var $menuItemComponent = createMenuItemComponent(menuItem);
         appendComponentToCxtMenu($menuItemComponent);
 
-        performBindings($menuItemComponent, menuItem.onClickFunction, menuItem.selector, menuItem.coreAsWell);
-      }//insertComponentBeforeExistingItem(component, existingItemID)
+        performBindings(
+          $menuItemComponent,
+          menuItem.onClickFunction,
+          menuItem.selector,
+          menuItem.coreAsWell
+        );
+      } //insertComponentBeforeExistingItem(component, existingItemID)
 
-      function createAndInsertMenuItemComponentBeforeExistingComponent(menuItem, existingComponentID) {
+      function createAndInsertMenuItemComponentBeforeExistingComponent(
+        menuItem,
+        existingComponentID
+      ) {
         // Create and insert menu item
         var $menuItemComponent = createMenuItemComponent(menuItem);
-        insertComponentBeforeExistingItem($menuItemComponent, existingComponentID);
+        insertComponentBeforeExistingItem(
+          $menuItemComponent,
+          existingComponentID
+        );
 
-        performBindings($menuItemComponent, menuItem.onClickFunction, menuItem.selector, menuItem.coreAsWell);
+        performBindings(
+          $menuItemComponent,
+          menuItem.onClickFunction,
+          menuItem.selector,
+          menuItem.coreAsWell
+        );
       }
 
       // create cxtMenu and append it to body
       function createAndAppendCxtMenuComponent() {
         var classes = getClassStr(options.contextMenuClasses);
-//        classes += ' cy-context-menus-cxt-menu';
-        $cxtMenu = $('<div class=' + classes + '></div>');
-        $cxtMenu.addClass('cy-context-menus-cxt-menu');
-        setScratchProp('cxtMenu', $cxtMenu);
+        //        classes += ' cy-context-menus-cxt-menu';
+        $cxtMenu = $("<div class=" + classes + "></div>");
+        $cxtMenu.addClass("cy-context-menus-cxt-menu");
+        setScratchProp("cxtMenu", $cxtMenu);
 
-        $('body').append($cxtMenu);
+        $("body").append($cxtMenu);
         return $cxtMenu;
       }
 
       // Creates a menu item as an html component
       function createMenuItemComponent(item) {
-        var classStr = getMenuItemClassStr(options.menuItemClasses, item.hasTrailingDivider);
+        var classStr = getMenuItemClassStr(
+          options.menuItemClasses,
+          item.hasTrailingDivider
+        );
         var itemStr = '<button id="' + item.id + '" class="' + classStr + '"';
 
-        if(item.tooltipText) {
+        if (item.tooltipText) {
           itemStr += ' title="' + item.tooltipText + '"';
         }
 
-        if(item.disabled) {
-          itemStr += ' disabled';
+        if (item.disabled) {
+          itemStr += " disabled";
         }
-        if (!item.image){
-            itemStr += '>' + item.content + '</button>';
+        if (!item.image) {
+          itemStr += ">" + item.content + "</button>";
+        } else {
+          itemStr +=
+            ">" +
+            '<img src="' +
+            item.image.src +
+            '" width="' +
+            item.image.width +
+            'px"; height="' +
+            item.image.height +
+            'px"; style="position:absolute; top: ' +
+            item.image.y +
+            "px; left: " +
+            item.image.x +
+            'px;">' +
+            item.content +
+            "</button>";
         }
-        else{
-            itemStr += '>' + '<img src="' + item.image.src + '" width="' + item.image.width + 'px"; height="'
-                + item.image.height + 'px"; style="position:absolute; top: ' + item.image.y + 'px; left: '
-                + item.image.x + 'px;">' + item.content + '</button>';
-        };
 
         var $menuItemComponent = $(itemStr);
 
-        $menuItemComponent.data('selector', item.selector); 
-        $menuItemComponent.data('on-click-function', item.onClickFunction);
-        $menuItemComponent.data('show', (typeof(item.show) === 'undefined' || item.show));  
+        $menuItemComponent.data("selector", item.selector);
+        $menuItemComponent.data("on-click-function", item.onClickFunction);
+        $menuItemComponent.data(
+          "show",
+          typeof item.show === "undefined" || item.show
+        );
         return $menuItemComponent;
       }
 
@@ -330,24 +400,24 @@
 
       // Insert the given component to cxtMenu just before the existing item with given ID
       function insertComponentBeforeExistingItem(component, existingItemID) {
-        var $existingItem = $('#' + existingItemID);
+        var $existingItem = $("#" + existingItemID);
         component.insertBefore($existingItem);
       }
 
       function destroyCxtMenu() {
-        if(!getScratchProp('active')) {
+        if (!getScratchProp("active")) {
           return;
         }
 
         removeAndUnbindMenuItems();
 
-        cy.off('tapstart', eventCyTapStart);
+        cy.off("tapstart", eventCyTapStart);
 
         $cxtMenu.remove();
         $cxtMenu = undefined;
         setScratchProp($cxtMenu, undefined);
-        setScratchProp('active', false);
-        setScratchProp('anyVisibleChild', false);
+        setScratchProp("active", false);
+        setScratchProp("anyVisibleChild", false);
       }
 
       function removeAndUnbindMenuItems() {
@@ -359,61 +429,63 @@
       }
 
       function removeAndUnbindMenuItem(itemID) {
-        var $component = typeof itemID === 'string' ? $('#' + itemID) : itemID;
-        var cxtfcn = $component.data('cy-context-menus-cxtfcn');
-        var selector = $component.data('selector');
-        var callOnClickFcn = $component.data('call-on-click-function');
-        var cxtCoreFcn = $component.data('cy-context-menus-cxtcorefcn');
-       
-        if(cxtfcn) {
-          cy.off('taphold', selector, cxtfcn);
-          cy.off('cxttap', selector, cxtfcn);
+        var $component = typeof itemID === "string" ? $("#" + itemID) : itemID;
+        var cxtfcn = $component.data("cy-context-menus-cxtfcn");
+        var selector = $component.data("selector");
+        var callOnClickFcn = $component.data("call-on-click-function");
+        var cxtCoreFcn = $component.data("cy-context-menus-cxtcorefcn");
+
+        if (cxtfcn) {
+          cy.off("taphold", selector, cxtfcn);
+          cy.off("cxttap", selector, cxtfcn);
         }
 
-        if(cxtCoreFcn) {
-          cy.off('taphold', cxtCoreFcn);
-          cy.off('cxttap', cxtCoreFcn);
+        if (cxtCoreFcn) {
+          cy.off("taphold", cxtCoreFcn);
+          cy.off("cxttap", cxtCoreFcn);
         }
 
-        if(callOnClickFcn) {
-          $component.off('click', callOnClickFcn);
+        if (callOnClickFcn) {
+          $component.off("click", callOnClickFcn);
         }
 
         $component.remove();
       }
 
-      function moveBeforeOtherMenuItemComponent(componentID, existingComponentID) {
-        if( componentID === existingComponentID ) {
+      function moveBeforeOtherMenuItemComponent(
+        componentID,
+        existingComponentID
+      ) {
+        if (componentID === existingComponentID) {
           return;
         }
 
-        var $component = $('#' + componentID).detach();
-        var $existingComponent = $('#' + existingComponentID);
+        var $component = $("#" + componentID).detach();
+        var $existingComponent = $("#" + existingComponentID);
 
         $component.insertBefore($existingComponent);
       }
 
       function bindMenuItemClickFunction(component) {
-        component.click( function() {
-            hideComponent($cxtMenu);
-            setScratchProp('cxtMenuPosition', undefined);
+        component.click(function() {
+          hideComponent($cxtMenu);
+          setScratchProp("cxtMenuPosition", undefined);
         });
       }
 
       function disableComponent(componentID) {
-        $('#' + componentID).attr('disabled', true);
+        $("#" + componentID).attr("disabled", true);
       }
 
       function enableComponent(componentID) {
-        $('#' + componentID).attr('disabled', false);
+        $("#" + componentID).attr("disabled", false);
       }
 
       function setTrailingDivider(componentID, status) {
-        var $component = $('#' + componentID);
-        if(status) {
+        var $component = $("#" + componentID);
+        if (status) {
           $component.addClass(dividerCSSClass);
-        }
-        else {
+        } else {
           $component.removeClass(dividerCSSClass);
         }
       }
@@ -422,82 +494,85 @@
       function getInstance(cy) {
         var instance = {
           // Returns whether the extension is active
-         isActive: function() {
-           return getScratchProp('active');
-         },
-         // Appends given menu item to the menu items list.
-         appendMenuItem: function(item) {
-           createAndAppendMenuItemComponent(item);
-           return cy;
-         },
-         // Appends menu items in the given list to the menu items list.
-         appendMenuItems: function(items) {
-           createAndAppendMenuItemComponents(items);
-           return cy;
-         },
-         // Removes the menu item with given ID.
-         removeMenuItem: function(itemID) {
-           removeAndUnbindMenuItem(itemID);
-           return cy;
-         },
-         // Sets whether the menuItem with given ID will have a following divider.
-         setTrailingDivider: function(itemID, status) {
-           setTrailingDivider(itemID, status);
-           return cy;
-         },
-         // Inserts given item before the existingitem.
-         insertBeforeMenuItem: function(item, existingItemID) {
-           createAndInsertMenuItemComponentBeforeExistingComponent(item, existingItemID);
-           return cy;
-         },
-         // Moves the item with given ID before the existingitem.
-         moveBeforeOtherMenuItem: function(itemID, existingItemID) {
-           moveBeforeOtherMenuItemComponent(itemID, existingItemID);
-           return cy;
-         },
-         // Disables the menu item with given ID.
-         disableMenuItem: function(itemID) {
-           disableComponent(itemID);
-           return cy;
-         },
-         // Enables the menu item with given ID.
-         enableMenuItem: function(itemID) {
-           enableComponent(itemID);
-           return cy;
-         },
-         // Disables the menu item with given ID.
-         hideMenuItem: function(itemID) {
-           $('#'+itemID).data('show', false);
-           hideComponent($('#'+itemID));
-           return cy;
-         },
-         // Enables the menu item with given ID.
-         showMenuItem: function(itemID) {
-           $('#'+itemID).data('show', true);
-           displayComponent($('#'+itemID));
-           return cy;
-         },
-         // Destroys the extension instance
-         destroy: function() {
-           destroyCxtMenu();
-           return cy;
-         }
+          isActive: function() {
+            return getScratchProp("active");
+          },
+          // Appends given menu item to the menu items list.
+          appendMenuItem: function(item) {
+            createAndAppendMenuItemComponent(item);
+            return cy;
+          },
+          // Appends menu items in the given list to the menu items list.
+          appendMenuItems: function(items) {
+            createAndAppendMenuItemComponents(items);
+            return cy;
+          },
+          // Removes the menu item with given ID.
+          removeMenuItem: function(itemID) {
+            removeAndUnbindMenuItem(itemID);
+            return cy;
+          },
+          // Sets whether the menuItem with given ID will have a following divider.
+          setTrailingDivider: function(itemID, status) {
+            setTrailingDivider(itemID, status);
+            return cy;
+          },
+          // Inserts given item before the existingitem.
+          insertBeforeMenuItem: function(item, existingItemID) {
+            createAndInsertMenuItemComponentBeforeExistingComponent(
+              item,
+              existingItemID
+            );
+            return cy;
+          },
+          // Moves the item with given ID before the existingitem.
+          moveBeforeOtherMenuItem: function(itemID, existingItemID) {
+            moveBeforeOtherMenuItemComponent(itemID, existingItemID);
+            return cy;
+          },
+          // Disables the menu item with given ID.
+          disableMenuItem: function(itemID) {
+            disableComponent(itemID);
+            return cy;
+          },
+          // Enables the menu item with given ID.
+          enableMenuItem: function(itemID) {
+            enableComponent(itemID);
+            return cy;
+          },
+          // Disables the menu item with given ID.
+          hideMenuItem: function(itemID) {
+            $("#" + itemID).data("show", false);
+            hideComponent($("#" + itemID));
+            return cy;
+          },
+          // Enables the menu item with given ID.
+          showMenuItem: function(itemID) {
+            $("#" + itemID).data("show", true);
+            displayComponent($("#" + itemID));
+            return cy;
+          },
+          // Destroys the extension instance
+          destroy: function() {
+            destroyCxtMenu();
+            return cy;
+          }
         };
 
         return instance;
       }
 
-      if ( opts !== 'get' ) {
+      if (opts !== "get") {
         // merge the options with default ones
         options = extend(defaults, opts);
-        setScratchProp('options', options);
+        setScratchProp("options", options);
 
         // Clear old context menu if needed
-        if(getScratchProp('active')) {
+        if (getScratchProp("active")) {
           destroyCxtMenu();
         }
 
-        setScratchProp('active', true);
+        setScratchProp("active", true);
 
         $cxtMenu = createAndAppendCxtMenuComponent();
 
@@ -507,23 +582,25 @@
         bindCyEvents();
         preventDefaultContextTap();
       }
-      
+
       return getInstance(this);
     });
   };
 
-  if( typeof module !== 'undefined' && module.exports ){ // expose as a commonjs module
+  if (typeof module !== "undefined" && module.exports) {
+    // expose as a commonjs module
     module.exports = register;
   }
 
-  if( typeof define !== 'undefined' && define.amd ){ // expose as an amd/requirejs module
-    define('cytoscape-context-menus', function(){
+  if (typeof define !== "undefined" && define.amd) {
+    // expose as an amd/requirejs module
+    define("cytoscape-context-menus", function() {
       return register;
     });
   }
 
-  if( typeof cytoscape !== 'undefined' && $ ){ // expose to global cytoscape (i.e. window.cytoscape)
-    register( cytoscape, $ );
+  if (typeof cytoscape !== "undefined" && $) {
+    // expose to global cytoscape (i.e. window.cytoscape)
+    register(cytoscape, $);
   }
-
 })();
